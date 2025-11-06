@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { SkillSwap, SkillSwapStatus } from '../types';
@@ -11,11 +10,13 @@ const getStatusClasses = (status: SkillSwapStatus) => {
         case 'declined': return 'bg-red-100 text-red-800';
         default: return 'bg-gray-100 text-gray-800';
     }
-}
+};
 
 const SkillSwapCard: React.FC<{ swap: SkillSwap; type: 'incoming' | 'outgoing' }> = ({ swap, type }) => {
-    const { findUserById, updateSkillSwapStatus } = useAppContext();
-    const otherUser = findUserById(type === 'incoming' ? swap.fromUserId : swap.toUserId);
+    const { updateSkillSwapStatus } = useAppContext();
+
+    // ✅ User is now provided by backend response
+    const otherUser = type === 'incoming' ? swap.fromUser : swap.toUser;
 
     if (!otherUser) return null;
 
@@ -27,12 +28,14 @@ const SkillSwapCard: React.FC<{ swap: SkillSwap; type: 'incoming' | 'outgoing' }
                         <img src={otherUser.avatar} alt={otherUser.name} className="w-10 h-10 rounded-full mr-3" />
                         <div>
                             <p className="font-semibold text-gray-800">{otherUser.name}</p>
-                            <p className="text-sm text-gray-500">{type === 'incoming' ? 'Sent you a request' : 'You sent a request'}</p>
+                            <p className="text-sm text-gray-500">
+                                {type === 'incoming' ? 'Sent you a request' : 'You sent a request'}
+                            </p>
                         </div>
                     </div>
                     <p className="text-gray-600 mb-2"><strong>You get:</strong> <span className="text-primary font-medium">{swap.requestedSkill}</span></p>
                     <p className="text-gray-600"><strong>You give:</strong> <span className="text-secondary font-medium">{swap.offeredSkill}</span></p>
-                    <p className="text-sm text-gray-500 mt-2 italic">"{swap.message}"</p>
+                    {swap.message && <p className="text-sm text-gray-500 mt-2 italic">"{swap.message}"</p>}
                 </div>
                 <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${getStatusClasses(swap.status)}`}>
                     {swap.status}
@@ -48,7 +51,6 @@ const SkillSwapCard: React.FC<{ swap: SkillSwap; type: 'incoming' | 'outgoing' }
         </div>
     );
 };
-
 
 const SkillSwapPage: React.FC = () => {
     const { currentUser, skillSwaps, token } = useAppContext();
@@ -70,9 +72,11 @@ const SkillSwapPage: React.FC = () => {
                     api.getSkillSwapMessages(activeSwapId, token),
                     api.getSkillSwapHistory(activeSwapId, token)
                 ]);
-                setMessages(msgs); setHistory(hist);
+                setMessages(msgs);
+                setHistory(hist);
             } catch {
-                setMessages([]); setHistory([]);
+                setMessages([]);
+                setHistory([]);
             }
         };
         load();
@@ -110,6 +114,7 @@ const SkillSwapPage: React.FC = () => {
                         )}
                     </div>
                 </div>
+
                 <div>
                     <h2 className="text-2xl font-bold text-dark mb-4">Outgoing Requests</h2>
                     <div className="space-y-4">
@@ -120,7 +125,7 @@ const SkillSwapPage: React.FC = () => {
                                 </div>
                             ))
                         ) : (
-                            <p className="text-gray-500">You haven't sent any skill swap requests.</p>
+                            <p className="text-gray-500">You haven't sent any requests.</p>
                         )}
                     </div>
                 </div>
@@ -144,16 +149,17 @@ const SkillSwapPage: React.FC = () => {
                             {messages.length === 0 && <p className="text-gray-500">No messages yet.</p>}
                         </div>
                         <form onSubmit={sendMessage} className="mt-3 flex space-x-2">
-                            <input value={newMessage} onChange={(e) => setNewMessage(e.target.value)} placeholder="Type a message" className="flex-1 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary" />
+                            <input value={newMessage} onChange={(e) => setNewMessage(e.target.value)} placeholder="Type a message" className="flex-1 px-3 py-2 border rounded-md" />
                             <button className="px-4 py-2 bg-primary text-white rounded-md">Send</button>
                         </form>
                     </div>
+
                     <div className="bg-white p-4 rounded-lg border">
                         <h3 className="font-semibold mb-3">Status Timeline</h3>
                         <div className="space-y-2">
                             {history.map(h => (
                                 <div key={h.id} className="text-sm flex items-center space-x-2">
-                                    <span className={`text-xs px-2 py-0.5 rounded-full ${h.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : h.status === 'accepted' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>{h.status}</span>
+                                    <span className={`text-xs px-2 py-0.5 rounded-full ${getStatusClasses(h.status)}`}>{h.status}</span>
                                     <span className="text-gray-600">{new Date(h.created_at || '').toLocaleString()}</span>
                                 </div>
                             ))}
