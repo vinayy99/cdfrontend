@@ -22,11 +22,15 @@ const CreateProjectPage: React.FC = () => {
     e.preventDefault();
     setError('');
     setSuccess('');
+
+    // ✅ Convert comma-separated skills → array
     const requiredSkills = form.skills.split(',').map(s => s.trim()).filter(Boolean);
+
     if (!form.title || !form.description || requiredSkills.length === 0) {
-      setError('Please fill in all fields with at least one required skill.');
+      setError('Please fill in all fields and include at least one skill (comma-separated).');
       return;
     }
+
     try {
       setSubmitting(true);
       const ok = await createProject(form.title, form.description, requiredSkills);
@@ -46,8 +50,10 @@ const CreateProjectPage: React.FC = () => {
   return (
     <div className="max-w-2xl mx-auto bg-white p-8 rounded-lg shadow">
       <h1 className="text-2xl font-bold text-dark mb-6">Create a New Project</h1>
+
       {error && <p className="bg-red-100 text-red-700 p-3 rounded-md text-sm mb-4">{error}</p>}
       {success && <p className="bg-green-100 text-green-700 p-3 rounded-md text-sm mb-4">{success}</p>}
+
       <form onSubmit={handleSubmit} className="space-y-4">
         <input
           type="text"
@@ -58,6 +64,7 @@ const CreateProjectPage: React.FC = () => {
           className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
           required
         />
+
         <textarea
           name="description"
           placeholder="Describe your project and what you’re building"
@@ -67,16 +74,23 @@ const CreateProjectPage: React.FC = () => {
           className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
           required
         />
+
         <input
           type="text"
           name="skills"
-          placeholder="Required skills (comma-separated, e.g., React, Node.js)"
+          placeholder="Required skills (EXAMPLE: entry, fragging, sniper, IGL)"
           value={form.skills}
           onChange={handleChange}
           className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
           required
         />
-        <button type="submit" disabled={submitting} className="px-5 py-2 bg-primary text-white rounded-md font-semibold hover:bg-blue-700 disabled:opacity-60">
+        <p className="text-sm text-gray-500">Separate skills with commas.</p>
+
+        <button
+          type="submit"
+          disabled={submitting}
+          className="px-5 py-2 bg-primary text-white rounded-md font-semibold hover:bg-blue-700 disabled:opacity-60"
+        >
           {submitting ? 'Creating...' : 'Create Project'}
         </button>
       </form>
@@ -85,5 +99,3 @@ const CreateProjectPage: React.FC = () => {
 };
 
 export default CreateProjectPage;
-
-
